@@ -1,0 +1,569 @@
+
+
+beta=ln(rt1/rt2) / (1/t1  -  (1/t2))
+
+
+SoftwareSerial mySerial(3, 2);
+
+void setup()
+{
+
+   //pinMode(2, INPUT_PULLUP);
+  Serial.begin(9600);
+  
+  
+  mySerial.begin(9600);
+
+
+  delay(1000);
+
+  mySerial.println("AT"); 
+  kontrol();
+  mySerial.println("AT+CSQ"); 
+  kontrol();
+  mySerial.println("AT+CCID"); 
+  kontrol();
+  mySerial.println("AT+CREG?"); 
+  kontrol();
+   mySerial.println("AT+CBAND?"); 
+  kontrol();
+    mySerial.println("AT+CBC"); 
+  kontrol();
+  // mySerial.println("AT+CSCS=\"GSM\"");
+  // kontrol();
+   mySerial.println("AT+CSCS?"); 
+  kontrol();
+   mySerial.println("AT+COPS?"); 
+ 
+  kontrol();
+}
+
+void loop()
+{
+ // mySerial.println("AT+COPS=?"); 
+  kontrol();
+  delay(2000);
+}
+
+
+/*
+
+ mySerial.println("AT+CSCS=\"GSM\"");
+   updateSerial();
+ 
+  mySerial.println("AT+CSCS?");
+  updateSerial();
+
+*/
+
+
+i
+
+40 mhz 115200
+
+
+
+
+*******************gmail***********
+SİFRE:995A5C4F2B9E4
+https://script.google.com/macros/s/AKfycbzO90hEPy8gNDC0mCEUyPN_JxrtTyOO1rTI03973EsN2yedGDDu/exec
+
+*************************************
+
+
+void setup() {
+ pinMode(12,OUTPUT);
+ pinMode(13,INPUT);
+}
+
+void loop() {
+
+
+  if(digitalRead(13))
+    digitalWrite(12,1);
+  else
+    digitalWrite(12,0);
+
+  delay(250);
+}
+*********webserver ******
+#include "WiFi.h"
+#include "esp_camera.h"
+#include "esp_timer.h"
+#include "img_converters.h"
+#include "Arduino.h"
+#include "soc/soc.h"           //  brownout icin.
+#include "soc/rtc_cntl_reg.h"  //  brownout icin.
+#include "driver/rtc_io.h"
+#include <ESPAsyncWebServer.h>
+#include <StringArray.h>
+#include <SPIFFS.h>
+#include <FS.h>
+
+
+const char* ssid = "MiRDEV";
+const char* password = "995A5C4F2B9E4";
+
+
+AsyncWebServer server(80);
+
+boolean takeNewPhoto = false;
+
+
+#define FILE_PHOTO "/photo.jpg"
+
+#define PWDN_GPIO_NUM     32
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM      0
+#define SIOD_GPIO_NUM     26
+#define SIOC_GPIO_NUM     27
+#define Y9_GPIO_NUM       35
+#define Y8_GPIO_NUM       34
+#define Y7_GPIO_NUM       39
+#define Y6_GPIO_NUM       36
+#define Y5_GPIO_NUM       21
+#define Y4_GPIO_NUM       19
+#define Y3_GPIO_NUM       18
+#define Y2_GPIO_NUM        5
+#define VSYNC_GPIO_NUM    25
+#define HREF_GPIO_NUM     23
+#define PCLK_GPIO_NUM     22
+
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { text-align:center; }
+    .vert { margin-bottom: 10%; }
+    .hori{ margin-bottom: 0%; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h2>ESP32-CAM Last Photo</h2>
+    <p>It might take more than 5 seconds to capture a photo.</p>
+    <p>
+      <button onclick="rotatePhoto();">ROTATE</button>
+      <button onclick="capturePhoto()">CAPTURE PHOTO</button>
+      <button onclick="location.reload();">REFRESH PAGE</button>
+    </p>
+  </div>
+  <div><img src="saved-photo" id="photo" width="70%"></div>
+</body>
+<script>
+  var deg = 0;
+  function capturePhoto() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', "/capture", true);
+    xhr.send();
+    window.location.reload(true);
+  }
+  function rotatePhoto() {
+    var img = document.getElementById("photo");
+    deg += 90;
+    if(isOdd(deg/90)){ document.getElementById("container").className = "vert"; }
+    else{ document.getElementById("container").className = "hori"; }
+    img.style.transform = "rotate(" + deg + "deg)";
+  }
+  function isOdd(n) { return Math.abs(n % 2) == 1; }
+</script>
+</html>)rawliteral";
+
+void setup() {
+
+   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);
+  
+  Serial.begin(115200);
+
+  
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  if (!SPIFFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    ESP.restart();
+  }
+  else {
+    delay(500);
+    Serial.println("SPIFFS mounted successfully");
+  }
+
+  
+  Serial.print("IP Address: http://");
+  Serial.println(WiFi.localIP());
+
+  
+ 
+
+  // OV2640 camera module
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0 = Y2_GPIO_NUM;
+  config.pin_d1 = Y3_GPIO_NUM;
+  config.pin_d2 = Y4_GPIO_NUM;
+  config.pin_d3 = Y5_GPIO_NUM;
+  config.pin_d4 = Y6_GPIO_NUM;
+  config.pin_d5 = Y7_GPIO_NUM;
+  config.pin_d6 = Y8_GPIO_NUM;
+  config.pin_d7 = Y9_GPIO_NUM;
+  config.pin_xclk = XCLK_GPIO_NUM;
+  config.pin_pclk = PCLK_GPIO_NUM;
+  config.pin_vsync = VSYNC_GPIO_NUM;
+  config.pin_href = HREF_GPIO_NUM;
+  config.pin_sscb_sda = SIOD_GPIO_NUM;
+  config.pin_sscb_scl = SIOC_GPIO_NUM;
+  config.pin_pwdn = PWDN_GPIO_NUM;
+  config.pin_reset = RESET_GPIO_NUM;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG;
+
+  if (psramFound()) {
+    config.frame_size = FRAMESIZE_UXGA;
+    config.jpeg_quality = 10;
+    config.fb_count = 2;
+  } else {
+    config.frame_size = FRAMESIZE_SVGA;
+    config.jpeg_quality = 12;
+    config.fb_count = 1;
+  }
+  // Camera init
+  esp_err_t err = esp_camera_init(&config);
+  if (err != ESP_OK) {
+    Serial.printf("Camera init failed with error 0x%x", err);
+    ESP.restart();
+  }
+
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send_P(200, "text/html", index_html);
+  });
+
+  server.on("/capture", HTTP_GET, [](AsyncWebServerRequest * request) {
+    takeNewPhoto = true;
+    request->send_P(200, "text/plain", "Taking Photo");
+  });
+
+  server.on("/saved-photo", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(SPIFFS, FILE_PHOTO, "image/jpg", false);
+  });
+
+  // Start server
+  server.begin();
+
+}
+
+void loop() {
+  if (takeNewPhoto) {
+    capturePhotoSaveSpiffs();
+    takeNewPhoto = false;
+  }
+  delay(1);
+}
+
+// Check if photo capture was successful
+bool checkPhoto( fs::FS &fs ) {
+  File f_pic = fs.open( FILE_PHOTO );
+  unsigned int pic_sz = f_pic.size();
+  return ( pic_sz > 100 );
+}
+
+// Capture Photo and Save it to SPIFFS
+void capturePhotoSaveSpiffs( void ) {
+  camera_fb_t * fb = NULL; // pointer
+  bool ok = 0; // Boolean indicating if the picture has been taken correctly
+
+  do {
+    // Take a photo with the camera
+    Serial.println("Taking a photo...");
+
+    fb = esp_camera_fb_get();
+    if (!fb) {
+      Serial.println("Camera capture failed");
+      return;
+    }
+
+    // Photo file name
+    Serial.printf("Picture file name: %s\n", FILE_PHOTO);
+    File file = SPIFFS.open(FILE_PHOTO, FILE_WRITE);
+
+    // Insert the data in the photo file
+    if (!file) {
+      Serial.println("Failed to open file in writing mode");
+    }
+    else {
+      file.write(fb->buf, fb->len); // payload (image), payload length
+      Serial.print("The picture has been saved in ");
+      Serial.print(FILE_PHOTO);
+      Serial.print(" - Size: ");
+      Serial.print(file.size());
+      Serial.println(" bytes");
+    }
+    // Close the file
+    file.close();
+    esp_camera_fb_return(fb);
+
+    // check if file has been correctly saved in SPIFFS
+    ok = checkPhoto(SPIFFS);
+  } while ( !ok );
+}
+
+*******************
+
+
+
+#if defined(CAMERA_MODEL_ESP_EYE)
+  pinMode(13, INPUT_PULLUP);
+  pinMode(14, INPUT_PULLUP);
+#endif
+
+
+#if defined(CAMERA_MODEL_M5STACK_WIDE)
+  s->set_vflip(s, 1);
+  s->set_hmirror(s, 1);
+#endif
+
+
+v_box=QVBoxLayout()
+            h_box=QHBoxLayout()
+
+
+            h_box4=QHBoxLayout()
+
+            self.yazi=QLineEdit()
+
+
+            self.buton=QPushButton("Gönder")
+
+
+
+            self.setWindowTitle("Esp32-Python Haberleşmesi")
+
+
+
+
+
+
+            h_box.addWidget(self.yazi)
+            h_box.addWidget(self.buton)
+
+            self.buton.clicked.connect(self.baglan)
+
+
+
+
+            self.portComboBox = QtWidgets.QComboBox()
+            self.ports = serial.tools.list_ports.comports()  # Com portlar listelendi.
+            for i in self.ports:
+                self.portComboBox.addItem(str(i))
+
+
+            self.baglanButon=QPushButton("Bağlan")
+            h_box4.addWidget(self.portComboBox)
+            h_box4.addWidget(self.baglanButon)
+
+            self.baglanButon.clicked.connect(self.baglanma)
+
+
+            v_box.addLayout(h_box4)
+
+            v_box.addLayout(h_box)
+
+
+
+            self.setLayout(v_box)
+
+
+
+
+
+            #self.setFixedSize(270, 100)
+            if(a==1):
+             self.show()
+
+
+denis@airscience.com
+
+-0.15942773692810206902880581742394
+
+
+29 derece.  8.1 k    302.15
+25 derece.  9.5 k    298.15
+
+double Termistor(int analogValue){
+ 
+ double temperature;
+ temperature = log((analogvalue*10000)/(4095-analogvalue));
+ temperature = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * temperature * temperature)) * temperature);
+ temperature = temperature - 273.15;
+ return temperature;
+}
+
+
+
+***************************************************
+     MODBUS Mantığı
+
+ {0x8800,0x7700,0x6600,0x5500};  
+ hold[0] ==>  0x8800
+ hold[1] ==>  0x7700
+ hold[2] ==>  0x6600
+ hold[3] ==>  0x5500
+
+
+ rx[1] ==> yuksek.
+ rx[2] ==> dusuk.
+
+ rx[3] ==> yuksek.
+ rx[4] ==> dusuk.
+
+ rx[5] ==> yuksek.
+ rx[6] ==> dusuk.
+
+ rx[7] ==> yuksek.
+ rx[8] ==> dusuk.
+
+
+*********************************************************
+
+while(yirmi_aktif==1 && bitti==0)
+{
+ if(input(alt)==0 && bir_oldu==0)
+  {
+    high(CA);
+    low(CY);
+  }
+  
+  if(input(alt)==1)
+  {
+   low(CA);
+   high(CY);
+   bir_oldu=1;
+  }
+  if(bir_oldu==1 && input(yirmi_cm))
+  {
+   low(CA);
+   low(CY);
+   bitti=1;
+   bir_oldu=0;
+  }
+ delay(10);
+
+}
+****************
+
+**************
+nodemcu esp
+#include <ESP8266WiFi.h>
+ 
+const char* ssid = "wifi güvenlik ağ  adınız";
+const char* password = "wifi güvenlik  sifreniz";
+ 
+int ledPin = 13; // GPIO13 ucu D7 ye karsılık gelir yukarıda anlatıldığı gibi
+WiFiServer server(80);// Server bağlantı portumuz
+ 
+void setup() {
+Serial.begin(115200);//BSeri iletişim hızımız
+delay(10);//10ms Bekliyoruz
+ 
+pinMode(ledPin, OUTPUT);//NodeMCU daki d7 pinini çıkış yapıyoruz.
+digitalWrite(ledPin, LOW); //NodeMCU daki d7 pinini LOW yapıyoruz.
+ 
+// Wifi bağlantısı
+Serial.println();
+Serial.println();
+Serial.print("Connecting to ");
+Serial.println(ssid);
+ 
+WiFi.begin(ssid, password);
+ 
+while (WiFi.status() != WL_CONNECTED) {
+delay(500);
+Serial.print(".");
+}
+Serial.println("");
+Serial.println("WiFi connected");
+ 
+// server baslatılıyor
+server.begin();
+Serial.println("Server started");
+ 
+// baglantı saglandıktan sonra serial monitorde bize ip adresini gösteriyor.
+Serial.print("Use this URL to connect: ");
+Serial.print("http://");
+Serial.print(WiFi.localIP());
+Serial.println("/");
+ 
+}
+ 
+void loop() {
+// bir clien istemci bağlı olup olmadığını kontrol ediyoruz
+WiFiClient client = server.available();
+if (!client) //client bağlantısı yapıldı mı kontrol ediyoruz.
+{
+return;
+}
+ 
+// client ın bir data gondermesini bekliyoruz
+Serial.println("new client");
+while(!client.available()){
+delay(1);
+}
+ 
+// gelen istekleri okuyoruz
+String request = client.readStringUntil('\r');
+Serial.println(request);
+client.flush();
+ 
+int value = LOW;
+if (request.indexOf("/LED-ACIK") != -1) {
+digitalWrite(ledPin, HIGH);
+value = HIGH;
+}
+if (request.indexOf("/LED-KAPALI") != -1) {
+digitalWrite(ledPin, LOW);
+value = LOW;
+}
+ 
+// bu kısımda html kodlarını internet arayüzüne yazıdırıyoruz.
+ 
+client.println("HTTP/1.1 200 OK");
+client.println("Content-Type: text/html");
+client.println("");
+client.println("<!DOCTYPE HTML>");
+client.println("<html>");
+ 
+client.print("Led suanda: ");
+ 
+if(value == HIGH) {
+client.print("ACIK");
+} else {
+client.print("KAPALI");
+}
+client.println("
+ 
+");
+client.println("<a href=\"/LED-ACIK\"\"><button>ledi yak </button></a>");
+client.println("<a href=\"/LED-KAPALI\"\"><button>ledi sondur </button></a>
+");
+client.println("</html>");
+ 
+delay(1);
+Serial.println("Client disonnected");
+Serial.println("");
+ 
+} 
+
+esp link:https://devreyakan.com/nodemcu-esp8266-kullanimi-ve-fonksiyonlari-bolum2/
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+srand(get_rtcc()); 
+rastgele=40+rand()%9;
+
+
+

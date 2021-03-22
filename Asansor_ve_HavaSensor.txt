@@ -1,0 +1,47 @@
+pn1 yüksüzde L KG cinsinden değeri(kapasitesi)
+         E mv değeri()
+
+
+pn      2  bu şekilde yazılacak.h1 yakın olan değere yuvarla.
+
+-  kilo load cell yön yukarı doğruysa.
+
+yj bj kalkacak.direk full değeri vurduğunda röle çekecek.altına düşünce bırak.
+
+
+şifre ekranı 1 defa.full 1 tane olack.full üstünde bi şey yapamaz.fullden sonra rl1(rl1 300 girildi ise.) ölçülen değer 300 ise röle çekecek.
+                                                                                 rl2 200 ise çek.
+                                                                                 rl3 eksi değerler 
+
+sol sağ gizli menü giriş
+bütün menülere giriş yukarı tuşu.
+
+full 0 10 v için.
+rl1,rl2 full değeri geçemez
+rl1 aralıklı buzzer 
+rl2 uzun buzzer.
+
+errlow ters yön.
+errhold yük yoksa.
+
+set tuşu ile menüler arası ilerle.
+
+
+
+
+
+
+
+      
+0.88 volt ve altı=0 m/s  655 ADC
+4.4  volt ve üstü 5 m/s  3604 ADC
+
+(5/(3604-655))*(ADC-655) ==>>Çıkan sayı Örnek 0.35 ==>> 100 ile çarp nextiona yolla.
+
+
+
+
+
+
+
+
